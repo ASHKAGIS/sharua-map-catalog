@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#1c1c1e">
+<meta name="description" content="Каталог карт для приложения Шаруа: добавьте спутниковую подложку в один тап.">
+<title>Каталог карт Шаруа</title>
+<style>
+  :root {
+    --bg: #f2f2f7;
+    --card: #ffffff;
+    --text: #1c1c1e;
+    --muted: #6e6e73;
+    --line: rgba(60, 60, 67, 0.14);
+    --accent: #007aff;
+    --accent-press: #0062cc;
+    --ok-bg: #e8f8ee;
+    --ok-text: #0b6b2f;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 8px 24px rgba(0, 0, 0, 0.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #000000;
+      --card: #1c1c1e;
+      --text: #f2f2f7;
+      --muted: #98989f;
+      --line: rgba(235, 235, 245, 0.12);
+      --accent: #0a84ff;
+      --accent-press: #409cff;
+      --ok-bg: #0f2e1b;
+      --ok-text: #7ee2a4;
+      --shadow: none;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  main {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: calc(24px + env(safe-area-inset-top)) 16px calc(32px + env(safe-area-inset-bottom));
+  }
+  header { margin-bottom: 20px; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .logo {
+    width: 44px; height: 44px; border-radius: 12px; flex: none;
+    background: linear-gradient(135deg, #34c759, #007aff);
+    display: grid; place-items: center;
+  }
+  h1 { font-size: 26px; line-height: 1.2; margin: 0; letter-spacing: -0.02em; }
+  .lead { color: var(--muted); margin: 12px 0 0; }
+  .grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
+  @media (min-width: 560px) { .grid { grid-template-columns: 1fr 1fr; } }
+  .card {
+    appearance: none; border: 1px solid var(--line); background: var(--card); color: inherit;
+    border-radius: 18px; padding: 0; text-align: left; font: inherit; cursor: pointer;
+    box-shadow: var(--shadow); overflow: hidden; display: flex; flex-direction: column;
+    transition: transform 0.12s ease;
+  }
+  .card:active { transform: scale(0.985); }
+  .card:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .thumb { aspect-ratio: 2 / 1; width: 100%; display: block; }
+  .body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 4px; flex: 1; }
+  .name { font-size: 18px; font-weight: 700; }
+  .desc { color: var(--muted); font-size: 14px; }
+  .add {
+    margin-top: 12px; align-self: stretch; text-align: center;
+    background: var(--accent); color: #fff; border-radius: 12px; padding: 12px 14px;
+    font-weight: 700; font-size: 16px;
+  }
+  .card:active .add { background: var(--accent-press); }
+  .toast {
+    position: fixed; left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom));
+    max-width: 688px; margin: 0 auto; background: var(--ok-bg); color: var(--ok-text);
+    border-radius: 14px; padding: 14px 16px; font-weight: 600; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
+    display: none;
+  }
+  .toast.show { display: block; }
+  .toast a { color: inherit; font-weight: 700; }
+  .note { color: var(--muted); font-size: 13px; margin-top: 22px; }
+  .note p { margin: 0 0 8px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="brand">
+      <div class="logo" aria-hidden="true">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3 3 6v15l6-3 6 3 6-3V3l-6 3-6-3z"/><path d="M9 3v15M15 6v15"/></svg>
+      </div>
+      <h1>Каталог карт Шаруа</h1>
+    </div>
+    <p class="lead">Нажмите на карту — она добавится в приложение Шаруа и сразу включится. Найти её можно в «Режимах карты», в четвёртой карточке.</p>
+  </header>
+
+  <section class="grid" id="catalog" aria-label="Карты"></section>
+
+  <div class="note">
+    <p>Карты предоставляются сторонними сервисами и принадлежат их правообладателям. Шаруа не связано с этими сервисами и не распространяет их данные: изображения загружаются в приложение напрямую с серверов поставщика.</p>
+    <p>Пользователь самостоятельно несет ответственность за соблюдение условий использования добавляемых источников карт.</p>
+  </div>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+  "use strict";
+
+  // Карты каталога. url — шаблон тайлов: {x}, {y}, {z} или {quadkey}.
+  var MAPS = [
+    {
+      name: "Google Спутник",
+      desc: "Спутниковые снимки высокого разрешения",
+      url: "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
+      minZoom: 0, maxZoom: 20, hybrid: false, tint: ["#2f4f2a", "#6b7d45", "#a59a6b"]
+    },
+    {
+      name: "Google Гибрид",
+      desc: "Снимки с дорогами и подписями",
+      url: "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
+      minZoom: 0, maxZoom: 20, hybrid: true, tint: ["#2f4f2a", "#6b7d45", "#a59a6b"]
+    },
+    {
+      name: "Bing Спутник",
+      desc: "Спутниковые и аэрофотоснимки",
+      url: "https://ecn.t3.tiles.virtualearth.net/tiles/a{quadkey}.jpeg?g=1",
+      minZoom: 0, maxZoom: 19, hybrid: false, tint: ["#3b4a2c", "#7a8150", "#b8a77a"]
+    },
+    {
+      name: "Bing Гибрид",
+      desc: "Снимки с дорогами и подписями на русском",
+      url: "https://ecn.t3.tiles.virtualearth.net/tiles/h{quadkey}.jpeg?g=1&mkt=ru-RU",
+      minZoom: 0, maxZoom: 19, hybrid: true, tint: ["#3b4a2c", "#7a8150", "#b8a77a"]
+    }
+  ];
+
+  // Диплинк в приложение: каждый параметр кодируется encodeURIComponent.
+  function deepLink(map) {
+    return "sharua://add-layer" +
+      "?name=" + encodeURIComponent(map.name) +
+      "&url=" + encodeURIComponent(map.url) +
+      "&minZoom=" + encodeURIComponent(String(map.minZoom)) +
+      "&maxZoom=" + encodeURIComponent(String(map.maxZoom));
+  }
+
+  // Иллюстрация карточки (без внешних картинок): поля и пятна снимка, у гибрида — дороги и подпись.
+  function thumb(map, index) {
+    var c = map.tint;
+    var id = "g" + index;
+    var svg =
+      '<svg class="thumb" viewBox="0 0 200 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true">' +
+      '<defs><linearGradient id="' + id + '" x1="0" y1="0" x2="1" y2="1">' +
+      '<stop offset="0" stop-color="' + c[0] + '"/><stop offset="0.55" stop-color="' + c[1] + '"/>' +
+      '<stop offset="1" stop-color="' + c[2] + '"/></linearGradient></defs>' +
+      '<rect width="200" height="100" fill="url(#' + id + ')"/>' +
+      '<path d="M0 62 L48 40 L92 58 L60 100 L0 100 Z" fill="#8a9a5b" opacity="0.55"/>' +
+      '<path d="M110 0 L200 0 L200 38 L150 52 L118 26 Z" fill="#c2b280" opacity="0.5"/>' +
+      '<path d="M120 100 C140 70 170 66 200 70 L200 100 Z" fill="#3d6f8f" opacity="0.85"/>' +
+      '<path d="M70 10 L104 6 L110 30 L76 36 Z" fill="#556b2f" opacity="0.6"/>';
+    if (map.hybrid) {
+      svg +=
+        '<path d="M-5 78 C50 60 95 30 205 22" stroke="#ffd27a" stroke-width="5" fill="none"/>' +
+        '<path d="M40 0 L62 100" stroke="#ffffff" stroke-width="2.5" fill="none" opacity="0.9"/>' +
+        '<text x="128" y="44" fill="#fff" font-size="11" font-weight="700" stroke="#000" stroke-width="2.5" ' +
+        'paint-order="stroke" font-family="Arial, sans-serif">Баянаул</text>';
+    }
+    return svg + "</svg>";
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, function (ch) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch];
+    });
+  }
+
+  var toast = document.getElementById("toast");
+  var toastTimer = null;
+
+  function showAdded(link) {
+    toast.innerHTML =
+      "Карта добавлена! Если переход не произошёл автоматически, откройте приложение Шаруа. " +
+      '<a href="' + escapeHtml(link) + '">Открыть ещё раз</a>';
+    toast.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toast.classList.remove("show"); }, 12000);
+  }
+
+  var catalog = document.getElementById("catalog");
+  MAPS.forEach(function (map, i) {
+    var card = document.createElement("button");
+    card.type = "button";
+    card.className = "card";
+    card.setAttribute("aria-label", "Добавить в Шаруа: " + map.name);
+    card.innerHTML =
+      thumb(map, i) +
+      '<span class="body">' +
+      '<span class="name">' + escapeHtml(map.name) + "</span>" +
+      '<span class="desc">' + escapeHtml(map.desc) + "</span>" +
+      '<span class="add">Добавить в Шаруа</span>' +
+      "</span>";
+    card.addEventListener("click", function () {
+      var link = deepLink(map);
+      showAdded(link);
+      // Переход по диплинку — телефон возвращает пользователя в приложение.
+      window.location.href = link;
+    });
+    catalog.appendChild(card);
+  });
+</script>
+</body>
+</html>
